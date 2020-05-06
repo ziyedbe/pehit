@@ -1,2 +1,2 @@
 # B1
-
+[B1] Write a (preferably python) Linux command-line tools to parse, extract, and visualize PE resources. For instance, wrestool tool (https://www.systutorials.com/docs/linux/man/1-wrestool/) (part of icoutils in debian/ubuntu) already supports few of them and the page above lists the ones not supported. You do not need to support them all. You can for instance port to python the one in wrestool, or add a couple of new ones (some are quite easy, other can be very complex).
