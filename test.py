@@ -6,9 +6,13 @@ def usage():
 	print ('test.py -i <inputfile> [-a] [-s Header]')
 
 def help():
-	print("-i : Input File")
+	print("-i <inputfile> : Input File")
 	print("-a : Display all headers")
-	print("-s header : Display a specific header")
+	print("-s <header> : Display a specific header")
+	print("-x : Display strings")
+	print("-l : Listing imported DLLs")
+	print("-f <ddl> : List imported functions in a specific DLL ")
+	print("-c : List sections")
 	print("------------------------------------")
 	print("[File Headers]")
 	print(" Machine\n","NumberOfSections\n", "PointerToSymbolTable\n"
@@ -59,15 +63,38 @@ def fstrings(pe,min=4):
 #				yield result
 #	return result
 
+
+#Listing imported DLLs
 def flibraries(pe):
-	########TODO########
-	print(pe.dump_info())
+	print("[*] Listing imported DLLs...")
+	for entry in pe.DIRECTORY_ENTRY_IMPORT:
+		print('\t' + entry.dll.decode('utf-8'))
+
+#list each imported function in a specific DLL 
+def ffunction(pe,arg):
+	for entry in pe.DIRECTORY_ENTRY_IMPORT:
+		dll_name = entry.dll.decode('utf-8')
+		if dll_name == arg:
+			print("[*]"+ arg+ " imports:")
+			for func in entry.imports:
+				print("\t%s at 0x%08x" % (func.name.decode('utf-8'), func.address))
+
+
+#Listing sections
+def fsections(pe):
+	for section in pe.sections:
+		print(section.Name.decode('utf-8'))
+		print("\tVirtual Address: " + hex(section.VirtualAddress))
+		print("\tVirtual Size: " + hex(section.Misc_VirtualSize))
+		print("\tRaw Size: " + hex(section.SizeOfRawData))
+
+
 
 def main(argv):
 	found_i = False
 	found_args = False
 	try:
-		opts, args = getopt.getopt(argv,"hi:o:as:lx")
+		opts, args = getopt.getopt(argv,"hi:o:as:lxf:c")
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -102,6 +129,14 @@ def main(argv):
 		elif opt in ("-s"):
 			found_args = True
 			display(pe,arg)
+
+		elif opt in ("-f"):
+			found_args = True
+			ffunction(pe,arg)
+
+		elif opt in ("-c"):
+			found_args = True
+			fsections(pe)
 
 
 
