@@ -4,6 +4,7 @@ import pefile
 
 def usage():
 	print ('test.py -i <inputfile> [-a] [-s Header]')
+	print ('Use -h for help')
 
 def help():
 	print("-i <inputfile> : Input File")
@@ -88,13 +89,18 @@ def fsections(pe):
 		print("\tVirtual Size: " + hex(section.Misc_VirtualSize))
 		print("\tRaw Size: " + hex(section.SizeOfRawData))
 
-
+def fexports(pe):
+	try:
+		for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+			print(hex(pe.OPTIONAL_HEADER.ImageBase + exp.address), exp.name.decode('utf-8'))
+	except AttributeError as err:
+		print(format(err))
 
 def main(argv):
 	found_i = False
 	found_args = False
 	try:
-		opts, args = getopt.getopt(argv,"hi:o:as:lxf:c")
+		opts, args = getopt.getopt(argv,"hi:o:as:lxf:ce")
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -137,6 +143,9 @@ def main(argv):
 		elif opt in ("-c"):
 			found_args = True
 			fsections(pe)
+		elif opt in ("-e"):
+			found_args = True
+			fexports(pe)
 
 
 
