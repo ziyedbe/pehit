@@ -1,6 +1,6 @@
 import sys, getopt
 import pefile
-
+import peutils
 
 def usage():
 	print ('test.py -i <inputfile> [-a] [-s Header]')
@@ -50,20 +50,15 @@ def display(pe,arg):
 def fstrings(pe,min=4):
 	print(pe)
 
-	########TODO########
-#	with open(path, errors="ignore") as f:
-#		for c in f.read():
-#			print(c)
-#			if c in string.printable:
-#				result += c
-#				continue
-#			if len(result) >= min:
-#				yield result
-#			result = ""
-#			if len(result) >= min:  # catch result at EOF
-#				yield result
-#	return result
 
+#Refers to the userdb.txt file to check the packer used by the pe file
+def fpacker(pe):
+
+	with open('userdb.txt', 'rt',encoding = "ISO-8859-1") as f: 
+		sig_data = f.read()
+		signatures = peutils.SignatureDatabase(data=sig_data)
+	matches = signatures.match(pe, ep_only = True)
+	print(matches)
 
 #Listing imported DLLs
 def flibraries(pe):
@@ -100,7 +95,7 @@ def main(argv):
 	found_i = False
 	found_args = False
 	try:
-		opts, args = getopt.getopt(argv,"hi:o:as:lxf:ce")
+		opts, args = getopt.getopt(argv,"hi:o:as:lxf:cep")
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -147,6 +142,10 @@ def main(argv):
 			found_args = True
 			fexports(pe)
 
+
+		elif opt in ("-p"):
+			found_args = True
+			fpacker(pe)
 
 
 	if not found_i:
