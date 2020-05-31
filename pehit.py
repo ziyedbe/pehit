@@ -41,7 +41,7 @@ def display(pe,arg):
 		print(arg+" : 0x%0X" % d )
 
 		if (arg=="Machine"):
-			m = open("machines.txt", "r")
+			m = open("src/machines.txt", "r")
 			for n,line in enumerate(m, 1):
 				if "0x%0X" % d in line:
 					print("Description : " ,line.split(',')[2].strip())
@@ -90,7 +90,7 @@ def fstrings(filename, min=4):
 #Refers to the userdb.txt file to check the packer used by the pe file
 def fpacker(pe):
 
-	with open('userdb.txt', 'rt',encoding = "ISO-8859-1") as f: 
+	with open('src/userdb.txt', 'rt',encoding = "ISO-8859-1") as f: 
 		sig_data = f.read()
 		signatures = peutils.SignatureDatabase(data=sig_data)
 	matches = signatures.match(pe, ep_only = True)
