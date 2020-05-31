@@ -1,2 +1,24 @@
-# B1
-[B1] Write a (preferably python) Linux command-line tools to parse, extract, and visualize PE resources. For instance, wrestool tool (https://www.systutorials.com/docs/linux/man/1-wrestool/) (part of icoutils in debian/ubuntu) already supports few of them and the page above lists the ones not supported. You do not need to support them all. You can for instance port to python the one in wrestool, or add a couple of new ones (some are quite easy, other can be very complex).
+# Pehit
+This project is part of the forensics class from EURECOM.
+[B1] Write a (preferably python) Linux command-line tools to parse, extract, and visualize PE resources.
+
+# Features & help
+Pehit is able to extract and parse the PE resources using pefile library.
+Those are the supported features :
+```
+-a : Display all headers (File Header and Optional Header)
+-s <header> : Display a specific header
+-x <minimal length>: Display strings
+-l : List imported DLLs
+-f <ddl> : List imported functions in a specific DLL
+-c : List sections
+-d <section number> : Dump the full content of a section
+-e : List exported symbols
+-p : Check the packer used
+```
+# Installation
+Pehit uses:
+```
+- Python3
+- pefile
+```

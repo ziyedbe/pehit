@@ -1,19 +1,23 @@
 import sys, getopt
 import pefile
 import peutils
+import string
 
 def usage():
-	print ('test.py -i <inputfile> [-a] [-s Header]')
+	print ('pehit.py -i <inputfile>')
 	print ('Use -h for help')
 
 def help():
 	print("-i <inputfile> : Input File")
 	print("-a : Display all headers")
 	print("-s <header> : Display a specific header")
-	print("-x : Display strings")
+	print("-x <minimal length>: Display strings")
 	print("-l : Listing imported DLLs")
 	print("-f <ddl> : List imported functions in a specific DLL ")
 	print("-c : List sections")
+	print("-d <section number> : Dump the full content of a section ")
+	print("-e : List exported symbols")
+	print("-p : Check the packer used")
 	print("------------------------------------")
 	print("[File Headers]")
 	print(" Machine\n","NumberOfSections\n", "PointerToSymbolTable\n"
@@ -33,7 +37,17 @@ def display(pe,arg):
 		print("TimeDateStamp : " + str(pe.FILE_HEADER.dump_dict()[arg]['Value'].split('[')[1][:-1]))
 	elif arg in ("Machine","NumberOfSections", "PointerToSymbolTable"
 		,"NumberOfSymbols","SizeOfOptionalHeader","Characteristics"):
-		print(arg+" : 0x%0X" % pe.FILE_HEADER.dump_dict()[arg]['Value'])
+		d=pe.FILE_HEADER.dump_dict()[arg]['Value']
+		print(arg+" : 0x%0X" % d )
+
+		if (arg=="Machine"):
+			m = open("machines.txt", "r")
+			for n,line in enumerate(m, 1):
+				if "0x%0X" % d in line:
+					print("Description : " ,line.split(',')[2].strip())
+					print("Constant : ", line.split(',')[0])
+			m.close()
+
 	elif arg in ("Magic","MajorLinkerVersion","MinorLinkerVersion","SizeOfCode","SizeOfInitializedData"    
 		,"SizeOfUninitializedData","AddressOfEntryPoint","BaseOfCode","BaseOfData","ImageBase"                 
 		,"SectionAlignment","FileAlignment","MajorOperatingSystemVersion","MinorOperatingSystemVersion"
@@ -41,14 +55,36 @@ def display(pe,arg):
 		,"Reserved1","SizeOfImage","SizeOfHeaders","CheckSum","Subsystem","DllCharacteristics"        
 		,"SizeOfStackReserve","SizeOfStackCommit","SizeOfHeapReserve","SizeOfHeapCommit"          
 		,"LoaderFlags","NumberOfRvaAndSizes"):
-		print(arg+" : 0x%0X" % pe.OPTIONAL_HEADER.dump_dict()[arg]['Value'])
+		p=pe.OPTIONAL_HEADER.dump_dict()[arg]['Value']
+		print(arg+" : 0x%0X" % p)
+		if (arg=="Magic"):
+			if("0x%0X" % p =="0x10B"):
+				print("PE format : PE32")
+			elif("0x%0X" % p =="0x20B") :
+				print("PE format : PE32+")
+		
+
 	else:
 		print("Please enter a valid argument")
 		print("-----------------------------")
 		help()
 
-def fstrings(pe,min=4):
-	print(pe)
+
+def fstrings(filename, min=4):
+    with open(filename, errors="ignore") as f: 
+        result = ""
+        liststrings =[]
+        for c in f.read():
+            if c in string.printable:
+                result += c
+                continue
+            if len(result) >= min:
+                liststrings.append(result)
+            result = ""
+        if len(result) >= min:  # catch result at EOF
+            liststrings.append(result)
+    for i in liststrings:
+    	print(i)
 
 
 #Refers to the userdb.txt file to check the packer used by the pe file
@@ -84,18 +120,24 @@ def fsections(pe):
 		print("\tVirtual Size: " + hex(section.Misc_VirtualSize))
 		print("\tRaw Size: " + hex(section.SizeOfRawData))
 
+#Dump the full content of a section
+def fsectiondump(pe,arg):
+	print(pe.sections[int(arg)])
+
+#List exported symbols
 def fexports(pe):
 	try:
 		for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
 			print(hex(pe.OPTIONAL_HEADER.ImageBase + exp.address), exp.name.decode('utf-8'))
 	except AttributeError as err:
 		print(format(err))
+		sys.exit()
 
 def main(argv):
 	found_i = False
 	found_args = False
 	try:
-		opts, args = getopt.getopt(argv,"hi:o:as:lxf:cep")
+		opts, args = getopt.getopt(argv,"hi:o:as:lx:f:cepd:")
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -111,8 +153,13 @@ def main(argv):
       #-i for the input file
 		elif opt in ("-i"):
 			found_i = True
-			pe = pefile.PE(arg)
-			path= arg
+			try:
+				pe = pefile.PE(arg)
+				path= arg
+			except FileNotFoundError as err:
+				print(format(err))
+				sys.exit()
+
 
 		elif opt in ("-a"):
 			found_args=True
@@ -125,7 +172,7 @@ def main(argv):
 
 		elif opt in ("-x"):
 			found_args=True
-			fstrings(pe)
+			fstrings(path,int(arg))
 
 		elif opt in ("-s"):
 			found_args = True
@@ -146,6 +193,10 @@ def main(argv):
 		elif opt in ("-p"):
 			found_args = True
 			fpacker(pe)
+
+		elif opt in ("-d"):
+			found_args = True
+			fsectiondump(pe,arg)
 
 
 	if not found_i:
